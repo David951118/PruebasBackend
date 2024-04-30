@@ -9,27 +9,31 @@ const {
 } = require('./middlewares/error.handler');
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 app.use(express.json());
+// Configuración de CORS
 const whitelist = ['http://localhost:3000', 'https://www.asegurar.com.co'];
-const options = {
-  origin: (origin, callback) => {
-    if (whitelist.includes(origin)){
-      callback(null, true);
-    }
-    else {
-      callback(new Error('Acceso no permitido'))
-    }
-  }
-}
-app.use(cors());
 
-app.get('/', (req, res) => {
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir solicitudes sin el encabezado Origin (como las de Postman)
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Acceso no permitido'));
+    }
+  },
+};
+
+// Usar CORS con las opciones configuradas
+app.use(cors(corsOptions));
+
+app.get('/api', (req, res) => {
   res.send('Hola mi server en express');
 });
 
-app.get('/nueva-ruta', (req, res) => {
+app.get('/api/nueva-ruta', (req, res) => {
   res.send('Hola, soy una nueva ruta');
 });
 
