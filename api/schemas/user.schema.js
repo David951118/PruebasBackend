@@ -1,24 +1,14 @@
 const Joi = require('joi');
 
-const id = Joi.string().uuid();
-const name = Joi.string().alphanum().min(3).max(15);
-const document = Joi.number().alphanum().min(7).max(10);
-const number = Joi.number().alphanum().min(6).max(10);
+const id = Joi.number().integer();
 const email = Joi.string().email();
-const direction = Joi.string().alphanum();
-
+const password = Joi.string().min(8);
+const role = Joi.string().min(5);
 const createUserSchema = Joi.object({
-  name: name.required(),
-  document: document.required(),
+  email: email.required(),
+  password: password.required(),
 });
+const updateUserSchema = Joi.object({ email: email, role: role });
+const getUserSchema = Joi.object({ id: id.required() });
 
-const updateProductSchema = Joi.object({
-  name: name,
-  price: price,
-});
-
-const getProductSchema = Joi.object({
-  id: id.required(),
-});
-
-module.exports = { createProductSchema, updateProductSchema, getProductSchema };
+module.exports = { createUserSchema, updateUserSchema, getUserSchema };
