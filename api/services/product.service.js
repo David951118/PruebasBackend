@@ -1,7 +1,8 @@
 const { faker } = require('@faker-js/faker');
+const { Op } = require('sequelize');
 const boom = require('@hapi/boom');
 
-const sequelize = require('../libs/sequelize');
+const { models } = require('../libs/sequelize');
 
 class ProductService {
   constructor() {
@@ -23,22 +24,55 @@ class ProductService {
   }
 
   async create(data) {
-    const newProduct = {
-      id: faker.string.uuid(),
-      ...data,
-    };
-    this.products.push(newProduct);
+    const newProduct = await models.Product.create(data);
     return newProduct;
   }
 
-  async find() {
-    const query = 'SELECT * FROM task';
-    const [data, metadata] = await sequelize.query(query);
-    return  data ;
+  async find(query) {
+    const options = {
+      include: ['category'],
+      where: {}
+    };
+    const { limit, offset } = query;
+    if (limit && offset) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+    const { price } = query;
+    if (price) {
+      options.where.price = price;
+    }
+
+    const { price_min, price_max } = query;
+    if (price_min && price_max) {
+      options.where.price = {
+        [Op.gte]: price_min,
+        [Op.lte]: price_max,
+      };
+    }
+
+    if (price_max) {
+      options.where.price = {
+        [Op.lte]: price_max,
+      };
+    }
+    const products = await models.Product.findAll(options);
+    return products;
   }
 
   async findOne(id) {
-    const product = this.products.find((item) => item.id === id);
+    // Verifica si el id es un número y conviértelo si es necesario
+    const idNumber = Number(id);
+
+    if (isNaN(idNumber)) {
+      throw boom.badRequest('Invalid id');
+    }
+
+    const product = await models.Product.findOne({
+      where: { id: idNumber },
+      include: ['category'],
+    });
+
     if (!product) {
       throw boom.notFound('product not found');
     }
